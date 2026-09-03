@@ -1,0 +1,6 @@
+{
+  "name": "SpyWright - Web QA Object Spy",
+  "description": "Interactive Web QA Object Spy, locator inspection engine, and test automation generator. Fetch live URLs or load demo presets, inspect DOM hierarchies and attributes, evaluate resilient locator strategies, and export production-ready test specs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
