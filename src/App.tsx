@@ -171,12 +171,17 @@ export default function App() {
         if (res.ok) {
           data = await res.json();
         } else {
-          // If response is not 200 (e.g. 404 on Vercel without serverless functions, or 500)
+          // If response is not 200 (e.g. 404 or 500)
           const text = await res.text().catch(() => '');
           try {
             data = JSON.parse(text);
           } catch {
-            data = { error: `HTTP ${res.status}: ${res.statusText || 'Proxy service unavailable'}` };
+            data = {
+              error:
+                res.status === 500
+                  ? 'Proxy server error. Please verify the URL or try again.'
+                  : `HTTP ${res.status}: ${res.statusText || 'Proxy service unavailable'}`,
+            };
           }
         }
       } catch (networkErr: any) {
@@ -313,12 +318,16 @@ export default function App() {
 
       {/* Error Alert Bar if any */}
       {fetchError && (
-        <div className="bg-rose-50 border-b border-rose-200 text-rose-800 px-4 py-2 text-xs flex items-center justify-between shadow-2xs">
-          <span>Failed to fetch live URL: {fetchError}. Showing cached preview.</span>
+        <div className="bg-rose-50 border-b border-rose-200 text-rose-800 px-4 py-2.5 text-xs flex items-center justify-between shadow-2xs">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-rose-700">Notice:</span>
+            <span>{fetchError}</span>
+          </div>
           <button
             type="button"
             onClick={() => setFetchError(null)}
-            className="text-rose-600 hover:text-rose-900 font-bold ml-4"
+            className="text-rose-600 hover:text-rose-900 font-bold ml-4 px-2 py-0.5 rounded hover:bg-rose-100"
+            title="Dismiss notice"
           >
             ✕
           </button>
