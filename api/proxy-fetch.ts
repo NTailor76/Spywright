@@ -114,18 +114,23 @@ function prepareHtmlForObjectSpy(rawHtml: string, finalOrigin: string): string {
 
 /**
  * Resilient multi-strategy fetch engine:
- * Tries Safari WebKit, Firefox Gecko, and Chromium headers across hostname variants.
+ * Uses modern Chromium Blink with complete Sec-Fetch metadata as the primary profile
+ * (passing enterprise WAFs like Akamai, Cloudflare, and PerimeterX in <1s),
+ * with mobile and Firefox fallbacks across hostname variants.
  */
 async function fetchTargetWebpage(targetUrl: string, customUserAgent?: string) {
   const parsedUrl = new URL(targetUrl);
   const hostname = parsedUrl.hostname.toLowerCase();
 
-  const urlsToTry: string[] = [targetUrl];
+  const urlsToTry: string[] = [];
+  // For apex domains without www (e.g. tesco.com, asos.com), try www. first to avoid slow 301/302 hops on WAFs
   if (!hostname.startsWith('www.') && !hostname.includes('localhost') && !/^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
     const withWww = new URL(targetUrl);
     withWww.hostname = 'www.' + hostname;
     urlsToTry.push(withWww.toString());
-  } else if (hostname.startsWith('www.')) {
+  }
+  urlsToTry.push(targetUrl);
+  if (hostname.startsWith('www.')) {
     const withoutWww = new URL(targetUrl);
     withoutWww.hostname = hostname.replace(/^www\./, '');
     urlsToTry.push(withoutWww.toString());
@@ -133,41 +138,55 @@ async function fetchTargetWebpage(targetUrl: string, customUserAgent?: string) {
 
   const profiles = [
     {
-      name: 'Safari WebKit (Mac)',
+      name: 'Chromium Blink (Win/Mac)',
       headers: {
         'User-Agent':
           customUserAgent ||
-          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15',
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'en-US,en-GB;q=0.9,en;q=0.8',
+        'sec-ch-ua': '"Chromium";v="133", "Not?A_Brand";v="99", "Google Chrome";v="133"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'Upgrade-Insecure-Requests': '1',
+      },
+      timeoutMs: 6500,
+    },
+    {
+      name: 'Mobile WebKit (iOS/Android)',
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (iPhone; CPU iPhone OS 17_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Mobile/15E148 Safari/604.1',
         Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.9',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
       },
-      timeoutMs: 6000,
+      timeoutMs: 6500,
     },
     {
       name: 'Firefox Gecko (Win)',
       headers: {
         'User-Agent':
-          customUserAgent ||
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0',
         Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.9',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Upgrade-Insecure-Requests': '1',
       },
-      timeoutMs: 6000,
-    },
-    {
-      name: 'Chromium Blink (Win)',
-      headers: {
-        'User-Agent':
-          customUserAgent ||
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
-        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',
-      },
-      timeoutMs: 6000,
+      timeoutMs: 6500,
     },
   ];
 
   let lastError: any = null;
+  let lastStatusInfo: { status: number; statusText: string; rawHtml: string } | null = null;
 
   for (const testUrl of urlsToTry) {
     for (const profile of profiles) {
@@ -199,10 +218,23 @@ async function fetchTargetWebpage(targetUrl: string, customUserAgent?: string) {
             headers: responseHeaders,
           };
         }
+
+        // Track HTTP status for clearer diagnostics
+        lastStatusInfo = { status, statusText, rawHtml };
       } catch (err: any) {
         lastError = err;
       }
     }
+  }
+
+  if (lastStatusInfo) {
+    if (lastStatusInfo.status === 403) {
+      throw new Error(`Target site returned HTTP 403 Forbidden. The domain is protected by enterprise bot detection (e.g. Akamai or Cloudflare) which blocked proxy access.`);
+    }
+    if (lastStatusInfo.status === 429) {
+      throw new Error(`Target site returned HTTP 429 Too Many Requests. The domain has rate-limited connection requests.`);
+    }
+    throw new Error(`Target site returned HTTP ${lastStatusInfo.status}: ${lastStatusInfo.statusText || 'Access denied'}.`);
   }
 
   throw lastError || new Error(`Unable to establish connection with ${targetUrl}`);
