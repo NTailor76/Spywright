@@ -1,7 +1,16 @@
 import { DemoPreset } from '../types';
 import { SAUCE_DEMO_PAGES } from './sauceDemoPages';
+import { GOOGLE_SEARCH_HTML } from './googleSearchPage';
 
 export const DEMO_PRESETS: DemoPreset[] = [
+  {
+    id: 'google-search',
+    name: 'Google Search - Classic Web Benchmark',
+    category: 'Search & Navigation',
+    description: 'W3C combobox search bar, Google Search & Feeling Lucky buttons, voice/lens tools, and footer links.',
+    url: 'https://www.google.com',
+    html: GOOGLE_SEARCH_HTML,
+  },
   {
     id: 'saucedemo',
     name: 'SauceDemo - Swag Labs Login & Portal',

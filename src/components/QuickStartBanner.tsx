@@ -8,17 +8,14 @@ import {
   Sparkles,
   ChevronRight,
   ShieldCheck,
-  Share2,
 } from 'lucide-react';
 
 interface QuickStartBannerProps {
   onOpenLegalModal?: () => void;
-  onOpenShowcaseModal?: () => void;
 }
 
 export const QuickStartBanner: React.FC<QuickStartBannerProps> = ({
   onOpenLegalModal,
-  onOpenShowcaseModal,
 }) => {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -35,16 +32,6 @@ export const QuickStartBanner: React.FC<QuickStartBannerProps> = ({
           </span>
         </div>
         <div className="flex items-center gap-3">
-          {onOpenShowcaseModal && (
-            <button
-              type="button"
-              onClick={onOpenShowcaseModal}
-              className="text-[11px] text-amber-300 hover:text-white flex items-center gap-1 font-semibold transition-colors"
-            >
-              <Share2 className="w-3 h-3" />
-              LinkedIn &amp; CV Kit
-            </button>
-          )}
           <button
             type="button"
             onClick={() => setIsOpen(true)}
@@ -139,18 +126,6 @@ export const QuickStartBanner: React.FC<QuickStartBannerProps> = ({
 
         {/* Action Controls */}
         <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
-          {onOpenShowcaseModal && (
-            <button
-              type="button"
-              onClick={onOpenShowcaseModal}
-              className="text-[11px] bg-gradient-to-r from-amber-400/20 to-indigo-500/30 hover:from-amber-400/30 hover:to-indigo-500/40 text-amber-200 hover:text-white px-2.5 py-1 rounded-md border border-amber-400/30 transition-all flex items-center gap-1.5 shadow-2xs font-semibold cursor-pointer"
-              title="View LinkedIn Post Copy, Resume Bullets, and Portfolio Showcase"
-            >
-              <Share2 className="w-3.5 h-3.5 text-amber-300" />
-              <span>LinkedIn &amp; CV Kit</span>
-            </button>
-          )}
-
           {onOpenLegalModal && (
             <button
               type="button"

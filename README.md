@@ -27,50 +27,6 @@
 
 ---
 
-## LinkedIn & Portfolio Showcase
-
-A complete, interactive **LinkedIn & CV Showcase Kit** is built directly into the web application (accessible via the top banner, navbar, and footer).
-
-### Sample LinkedIn Announcement Post
-
-```markdown
-🚀 Excited to share ElementSync — an interactive Web QA Object Spy & test locator generator!
-
-🌐 Live Web App: https://element-sync.vercel.app/
-
-Traditional test locators frequently break when dynamic CSS or layout classes shift. ElementSync brings IDE-grade DOM inspection, accessibility-first W3C ARIA ranking, and deterministic test script generation directly into the browser.
-
-Key Features:
-🎯 Live Web Object Spy with real-time DOM hover highlighting & attribute extraction
-⭐ W3C-Standard Locator Hierarchy (getByRole, getByTestId, getByLabel) strictly scored by resilience
-🔄 Multi-Engine Emulation (Chromium, Firefox, WebKit)
-🎥 Live Test Journey Recorder with 1-click Page Object Model (POM) export
-⚡ Client-side privacy-first architecture with zero credential leakage
-
-Check it out live: https://element-sync.vercel.app/
-
-#QAAutomation #SoftwareEngineering #TypeScript #React #WebTesting #SDET #DevOps
-```
-
----
-
-## Resume / CV Bullet Points (STAR Format)
-
-### For QA Lead / SDET / Test Automation Architect:
-- **Architected and deployed ElementSync** ([element-sync.vercel.app](https://element-sync.vercel.app/)), a production browser-based QA Object Spy and test generator that reduced automated test locator authoring time by ~65%.
-- **Engineered an AST-based DOM analyzer** that dynamically parses web elements into prioritized W3C ARIA accessibility locators (`getByRole`, `getByLabel`, `getByTestId`) with strict single-match verification.
-- **Developed a real-time Test Journey Recorder** supporting multi-browser engine profiles (Chromium, Firefox, WebKit), generating modular Page Object Model (POM) suites and Cucumber BDD features in TypeScript/JavaScript.
-- **Implemented client-side sandboxed iframe orchestration** with synthetic event interception, guaranteeing zero sensitive credential leakage and full GDPR/compliance adherence.
-
-### For Senior Frontend / Full-Stack Engineer:
-- **Built and shipped ElementSync** ([element-sync.vercel.app](https://element-sync.vercel.app/)), a high-performance single-page application for developer testing and DOM tree inspection built with React 18, TypeScript, and Tailwind CSS.
-- **Crafted a responsive split-pane UI** featuring virtualized DOM inspection trees, live CSS highlighting canvas, and synchronized code generation viewers with copy-to-clipboard workflows.
-- **Implemented robust cross-origin messaging and iframe isolation techniques** to safely inject inspector overlays without affecting target website script execution.
-
----
-
----
-
 ## Getting Started
 
 ### Installation & Development

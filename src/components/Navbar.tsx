@@ -14,7 +14,6 @@ import {
   Compass,
   ScanEye,
   Scale,
-  Share2,
 } from 'lucide-react';
 import { DemoPreset, SupportedLanguage, BrowserType } from '../types';
 import { DEMO_PRESETS } from '../data/demoPresets';
@@ -37,7 +36,6 @@ interface NavbarProps {
   onOpenCodeModal: () => void;
   onOpenAiModal: () => void;
   onOpenLegalModal?: () => void;
-  onOpenShowcaseModal?: () => void;
   recordedActionsCount: number;
 }
 
@@ -59,7 +57,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCodeModal,
   onOpenAiModal,
   onOpenLegalModal,
-  onOpenShowcaseModal,
   recordedActionsCount,
 }) => {
   const [inputUrl, setInputUrl] = useState(currentUrl);
@@ -290,20 +287,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <Sparkles className="w-4 h-4 text-purple-600" />
           </button>
-
-          {/* LinkedIn & CV Showcase Kit Button */}
-          {onOpenShowcaseModal && (
-            <button
-              id="btn-open-showcase-modal"
-              type="button"
-              onClick={onOpenShowcaseModal}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-md bg-gradient-to-r from-amber-50 to-indigo-50 hover:from-amber-100 hover:to-indigo-100 text-indigo-900 border border-indigo-200 shadow-2xs transition-colors cursor-pointer"
-              title="Showcase Kit: LinkedIn Posts, CV Bullets & Live App Link"
-            >
-              <Share2 className="w-3.5 h-3.5 text-indigo-600" />
-              <span className="hidden lg:inline">LinkedIn &amp; CV</span>
-            </button>
-          )}
 
           {/* Legal & Compliance Notice Button */}
           {onOpenLegalModal && (

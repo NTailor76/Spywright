@@ -7,8 +7,8 @@ import { TestRecorderDrawer } from './components/TestRecorderDrawer';
 import { AiArchitectModal } from './components/AiArchitectModal';
 import { QuickStartBanner } from './components/QuickStartBanner';
 import { LegalNoticeModal } from './components/LegalNoticeModal';
-import { ShowcaseGuideModal } from './components/ShowcaseGuideModal';
 import { DEMO_PRESETS } from './data/demoPresets';
+import { GOOGLE_SEARCH_HTML } from './data/googleSearchPage';
 import { parseDocumentToDomTree } from './utils/domParser';
 import {
   DomElementNode,
@@ -59,7 +59,6 @@ export default function App() {
   const [isCodeModalOpen, setIsCodeModalOpen] = useState<boolean>(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState<boolean>(false);
   const [isLegalModalOpen, setIsLegalModalOpen] = useState<boolean>(false);
-  const [isShowcaseModalOpen, setIsShowcaseModalOpen] = useState<boolean>(false);
 
   // Parse HTML into DOM Tree and allElements
   const { domTree, allElements, elementMap } = useMemo(() => {
@@ -125,7 +124,7 @@ export default function App() {
       .replace(/^www\./, '')
       .replace(/\/$/, '');
 
-    // Check if matching a built-in or benchmark preset (e.g., saucedemo.com)
+    // Check if matching a built-in or benchmark preset (e.g., google.com, saucedemo.com)
     const matchingPreset = DEMO_PRESETS.find((p) => {
       const pClean = p.url
         .toLowerCase()
@@ -135,7 +134,8 @@ export default function App() {
       return (
         pClean === cleanInput ||
         p.id.toLowerCase() === cleanInput ||
-        (cleanInput.includes('saucedemo') && p.id === 'saucedemo')
+        (cleanInput.includes('saucedemo') && p.id === 'saucedemo') ||
+        ((cleanInput === 'google.com' || cleanInput === 'google' || cleanInput.startsWith('google.')) && p.id === 'google-search')
       );
     });
 
@@ -154,23 +154,46 @@ export default function App() {
         targetUrl = 'https://' + targetUrl;
       }
 
-      const res = await fetch('/api/proxy-fetch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          url: targetUrl,
-          viewportWidth: contextConfig.viewport.width,
-          viewportHeight: contextConfig.viewport.height,
-        }),
-      });
+      const isGoogleUrl = targetUrl.toLowerCase().includes('google.');
 
-      const data = await res.json();
-      if (data.success && data.html) {
+      let data: any = null;
+      try {
+        const res = await fetch('/api/proxy-fetch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url: targetUrl,
+            viewportWidth: contextConfig.viewport.width,
+            viewportHeight: contextConfig.viewport.height,
+          }),
+        });
+
+        if (res.ok) {
+          data = await res.json();
+        } else {
+          // If response is not 200 (e.g. 404 on Vercel without serverless functions, or 500)
+          const text = await res.text().catch(() => '');
+          try {
+            data = JSON.parse(text);
+          } catch {
+            data = { error: `HTTP ${res.status}: ${res.statusText || 'Proxy service unavailable'}` };
+          }
+        }
+      } catch (networkErr: any) {
+        data = { error: networkErr.message || 'Network request failed' };
+      }
+
+      if (data?.success && data?.html) {
         setCurrentUrl(data.finalUrl || targetUrl);
         setCurrentHtml(data.html);
         setSelectedElement(null);
+      } else if (isGoogleUrl) {
+        // High-availability fallback for Google search benchmarks
+        setCurrentUrl('https://www.google.com');
+        setCurrentHtml(GOOGLE_SEARCH_HTML);
+        setSelectedElement(null);
       } else {
-        throw new Error(data.error || 'Failed to fetch the target webpage.');
+        throw new Error(data?.error || 'Failed to fetch the target webpage.');
       }
     } catch (err: any) {
       console.error('Fetch error:', err);
@@ -278,14 +301,12 @@ export default function App() {
         onOpenCodeModal={() => setIsCodeModalOpen(true)}
         onOpenAiModal={() => setIsAiModalOpen(true)}
         onOpenLegalModal={() => setIsLegalModalOpen(true)}
-        onOpenShowcaseModal={() => setIsShowcaseModalOpen(true)}
         recordedActionsCount={recordedActions.length}
       />
 
       {/* Top Instructions: Quick Start Guide */}
       <QuickStartBanner
         onOpenLegalModal={() => setIsLegalModalOpen(true)}
-        onOpenShowcaseModal={() => setIsShowcaseModalOpen(true)}
       />
 
       {/* Error Alert Bar if any */}
@@ -375,14 +396,6 @@ export default function App() {
           >
             Legal Notice &amp; Compliance Center
           </button>
-          <span className="text-slate-300">|</span>
-          <button
-            type="button"
-            onClick={() => setIsShowcaseModalOpen(true)}
-            className="text-amber-600 hover:text-amber-800 font-semibold underline cursor-pointer"
-          >
-            LinkedIn &amp; CV Showcase Kit (element-sync.vercel.app)
-          </button>
         </div>
       </footer>
 
@@ -438,12 +451,6 @@ export default function App() {
       <LegalNoticeModal
         isOpen={isLegalModalOpen}
         onClose={() => setIsLegalModalOpen(false)}
-      />
-
-      {/* LinkedIn, CV & Portfolio Showcase Guide Modal */}
-      <ShowcaseGuideModal
-        isOpen={isShowcaseModalOpen}
-        onClose={() => setIsShowcaseModalOpen(false)}
       />
     </div>
   );
