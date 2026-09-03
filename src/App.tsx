@@ -187,16 +187,18 @@ export default function App() {
         setCurrentUrl(data.finalUrl || targetUrl);
         setCurrentHtml(data.html);
         setSelectedElement(null);
+        setFetchError(null);
       } else if (isGoogleUrl) {
         // High-availability fallback for Google search benchmarks
         setCurrentUrl('https://www.google.com');
         setCurrentHtml(GOOGLE_SEARCH_HTML);
         setSelectedElement(null);
+        setFetchError(null);
       } else {
-        throw new Error(data?.error || 'Failed to fetch the target webpage.');
+        setFetchError(data?.error || 'Could not retrieve webpage content. Please check the URL or try an alternate site.');
       }
     } catch (err: any) {
-      console.error('Fetch error:', err);
+      console.warn('Fetch error:', err);
       setFetchError(err.message || 'Could not load URL');
     } finally {
       setIsLoading(false);

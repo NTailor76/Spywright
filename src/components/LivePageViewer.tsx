@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import {
   Crosshair,
   ExternalLink,
@@ -71,6 +71,25 @@ export const LivePageViewer: React.FC<LivePageViewerProps> = ({
   const [scale, setScale] = useState<number>(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [engineNotification, setEngineNotification] = useState<string | null>(null);
+
+  // Client-side sanitizer: guarantees that third-party scripts, hydration error handlers,
+  // or anti-framing frame busters cannot wipe the body or blank the screen.
+  const sanitizedHtml = useMemo(() => {
+    if (!html) return '';
+    let clean = html;
+    // Neutralize executable scripts so they cannot crash hydration or execute frame-busters
+    clean = clean.replace(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi, (match, attrs) => {
+      if (/type=["']application\/(ld\+)?json["']/i.test(attrs)) {
+        return match;
+      }
+      return `<script type="text/disabled" data-spy-neutralized="true"${attrs}>/* Neutralized for QA Object Spy */</script>`;
+    });
+    // Neutralize inline lifecycle triggers
+    clean = clean.replace(/\s+on(load|unload|beforeunload|error)=["'][^"']*["']/gi, ' data-disabled-event="true"');
+    // Strip meta refresh and CSP frame-ancestors
+    clean = clean.replace(/<meta[^>]*http-equiv=["']?(refresh|Content-Security-Policy|X-Frame-Options)["']?[^>]*>/gi, '');
+    return clean;
+  }, [html]);
 
   // Show quick notification banner when browser engine switches
   useEffect(() => {
@@ -181,6 +200,22 @@ export const LivePageViewer: React.FC<LivePageViewerProps> = ({
             outline: 2px solid #f59e0b !important;
             outline-offset: 1px !important;
             background-color: rgba(245, 158, 11, 0.2) !important;
+          }
+          /* Anti-blank screen guard: prevent anti-flicker or hydration hide styles from hiding content */
+          html, body {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            min-height: 100vh !important;
+          }
+          .async-hide {
+            opacity: 1 !important;
+            visibility: visible !important;
+          }
+          #__next, #root, #chrome-app, main {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
           }
           /* Engine-specific font smoothing and scrollbars */
           ${
@@ -971,9 +1006,9 @@ export const LivePageViewer: React.FC<LivePageViewerProps> = ({
           <iframe
             id="spied-page-iframe"
             ref={iframeRef}
-            srcDoc={html}
+            srcDoc={sanitizedHtml}
             title="Inspected Web Page Canvas"
-            sandbox="allow-same-origin allow-scripts allow-forms"
+            sandbox="allow-same-origin allow-forms allow-popups"
             className="w-full flex-1 min-h-[640px] border-none block"
           />
 
